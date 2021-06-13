@@ -13,7 +13,7 @@ recorder = srpa()
 
 
 def close_recorder():
-    print('Exit')
+    print("Exit")
     srpa.main_overlay.clear_all()
     srpa.main_overlay.refresh()
     srpa.ss_overlay.clear_all()
@@ -40,10 +40,10 @@ def on_move(x, y):
 listener_m = mouse_l(on_move=on_move, on_click=on_click)
 
 if __name__ == "__main__":
-    print('Start...')
+    print("Start...")
     # recorder.show_screenshot_full_screen()
 
-    with keyboard.GlobalHotKeys({'<ctrl>+<alt>+s': close_recorder}) as kl:
+    with keyboard.GlobalHotKeys({"<ctrl>+<alt>+s": close_recorder}) as kl:
         listener_m.start()
         listener_m.wait()
         kl.join()

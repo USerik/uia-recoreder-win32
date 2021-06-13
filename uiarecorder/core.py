@@ -53,24 +53,22 @@ class SmartRPAUIElemGetter:
     queue = Queue()
     previous_wrapper = None
     previous_wrapper_rect = None
-    recorder_elems_path = str(Path(Path.cwd()).joinpath('recorder_elems'))
+    recorder_elems_path = str(Path(Path.cwd()).joinpath("recorder_elems"))
     main_overlay = oaam.Overlay()
     ss_overlay = oaam.Overlay()
 
-    temp_dir = f'{os.path.split(__file__)[0]}/temp'
+    temp_dir = f"{os.path.split(__file__)[0]}/temp"
 
     def __init__(self, elems_path=""):
-        self.desktop_obj = pywinauto.Desktop(
-            backend='uia', allow_magic_lookup=False)
+        self.desktop_obj = pywinauto.Desktop(backend="uia", allow_magic_lookup=False)
         self.screenshot = self.take_buff_screenshot()
 
-        if os.environ.get('RECORDER_ELEMS_PATH') is not None:
-            self.recorder_elems_path = os.environ.get('RECORDER_ELEMS_PATH')
+        if os.environ.get("RECORDER_ELEMS_PATH") is not None:
+            self.recorder_elems_path = os.environ.get("RECORDER_ELEMS_PATH")
         elif elems_path != "":
             self.recorder_elems_path = elems_path
         else:
-            self.recorder_elems_path = str(
-                Path(Path.cwd()).joinpath('recorder_elems'))
+            self.recorder_elems_path = str(Path(Path.cwd()).joinpath("recorder_elems"))
 
         self.thread = threading.Thread(target=self.worker)
         self.thread.start()
@@ -85,8 +83,7 @@ class SmartRPAUIElemGetter:
 
     @classmethod
     def minimize_all_windows(cls):
-        """Minimize all windows WinOS
-        """
+        """Minimize all windows WinOS"""
 
         hwnd = FindWindow("Shell_TrayWnd", None)
         SendMessage(hwnd, WM_COMMAND, 419, 0)
@@ -100,18 +97,16 @@ class SmartRPAUIElemGetter:
         Path(self.recorder_elems_path).mkdir(exist_ok=True)
 
         with tempfile.NamedTemporaryFile(
-            mode='w',
-            prefix='elem_',
-            suffix='.json',
+            mode="w",
+            prefix="elem_",
+            suffix=".json",
             delete=False,
-            dir=self.recorder_elems_path
+            dir=self.recorder_elems_path,
         ) as outfile:
             json.dump(obj=data, fp=outfile, indent=4, sort_keys=True)
 
     def worker(self):
-        """Обработка событии в очереди
-
-        """
+        """Обработка событии в очереди"""
         while True:
             if not self.thread_is_alive:
                 break
@@ -119,7 +114,7 @@ class SmartRPAUIElemGetter:
                 task = self.queue.get(timeout=3)
             except queue.Empty:
                 continue
-            wrapper = task['wrapper']
+            wrapper = task["wrapper"]
             elem_image = self.get_elem_image(wrapper)
             elem_rect = wrapper.rectangle()
             elem_path = self.get_element_path(wrapper)
@@ -131,12 +126,9 @@ class SmartRPAUIElemGetter:
                     "L": elem_rect.left,
                     "T": elem_rect.top,
                     "R": elem_rect.right,
-                    "B": elem_rect.bottom
+                    "B": elem_rect.bottom,
                 },
-                "mouse_coords": {
-                    "x": task['x'],
-                    "y": task['y']
-                },
+                "mouse_coords": {"x": task["x"], "y": task["y"]},
                 "path": elem_path,
             }
             self.save_into_json(json_data)
@@ -153,11 +145,10 @@ class SmartRPAUIElemGetter:
         """
 
         hwnd = win32gui.WindowFromPoint((0, 0))
-        monitor = (0, 0, win32api.GetSystemMetrics(
-            0), win32api.GetSystemMetrics(1))
+        monitor = (0, 0, win32api.GetSystemMetrics(0), win32api.GetSystemMetrics(1))
         win32gui.InvalidateRect(hwnd, monitor, True)
 
-    def is_same_wrapper(self,  x_coordinates, y_coordinates) -> bool:
+    def is_same_wrapper(self, x_coordinates, y_coordinates) -> bool:
         result = True
         try:
             rect = self.get_elem_rect(x_coordinates, y_coordinates)
@@ -174,8 +165,15 @@ class SmartRPAUIElemGetter:
         if self.previous_wrapper_rect != rect:
             self.main_overlay.clear_all()
             self.previous_wrapper_rect = rect
-            self.main_overlay.add(geometry=oaam.Shape.rectangle, x=rect.left, y=rect.top,
-                                  width=rect.width(), height=rect.height(), thickness=3, color=(255, 0, 0))
+            self.main_overlay.add(
+                geometry=oaam.Shape.rectangle,
+                x=rect.left,
+                y=rect.top,
+                width=rect.width(),
+                height=rect.height(),
+                thickness=3,
+                color=(255, 0, 0),
+            )
             self.main_overlay.refresh()
 
     def draw_red_outline(self, x_coordinates, y_coordinates):
@@ -183,19 +181,18 @@ class SmartRPAUIElemGetter:
         docstring
         """
         try:
-            wrapper = self.desktop_obj.from_point(
-                x_coordinates, y_coordinates)
+            wrapper = self.desktop_obj.from_point(x_coordinates, y_coordinates)
         except comtypes.COMError:
             return
 
         if wrapper != self.previous_wrapper:
             self.refresh_screen()
             self.previous_wrapper = wrapper
-            wrapper.draw_outline(colour='red', thickness=3)
+            wrapper.draw_outline(colour="red", thickness=3)
 
         if not self.previous_wrapper:
             self.refresh_screen()
-            wrapper.draw_outline(colour='red', thickness=3)
+            wrapper.draw_outline(colour="red", thickness=3)
 
     def get_elem_rect(self, x_coordinates, y_coordinates):
         """[summary]
@@ -205,9 +202,7 @@ class SmartRPAUIElemGetter:
             y_coordinates ([type]): [description]
         """
         try:
-            wrapper = self.desktop_obj.from_point(
-                x_coordinates, y_coordinates
-            )
+            wrapper = self.desktop_obj.from_point(x_coordinates, y_coordinates)
         except comtypes.COMError:
             return None
 
@@ -223,10 +218,8 @@ class SmartRPAUIElemGetter:
         Returns:
             wrapper: возвращает pywinauto UIAWrapper
         """
-        wrapper = self.desktop_obj.from_point(
-            x_coordinates, y_coordinates)
-        self.queue.put(
-            {'wrapper': wrapper, 'x': x_coordinates, 'y': y_coordinates})
+        wrapper = self.desktop_obj.from_point(x_coordinates, y_coordinates)
+        self.queue.put({"wrapper": wrapper, "x": x_coordinates, "y": y_coordinates})
 
         return wrapper
 
@@ -249,10 +242,7 @@ class SmartRPAUIElemGetter:
                 w, h = PIL.Image.open(self.screenshot).size
                 rect = wrapper.rectangle()
                 elem_image = PIL.Image.open(self.screenshot).crop(
-                    (int(rect.left),
-                    int(rect.top),
-                    int(rect.right),
-                    int(rect.bottom))
+                    (int(rect.left), int(rect.top), int(rect.right), int(rect.bottom))
                 )
             except Exception as err:
                 # TODO must be logged
@@ -261,8 +251,8 @@ class SmartRPAUIElemGetter:
 
         if elem_image:
             buff = BytesIO()
-            elem_image.save(buff, format='PNG')
-            result = base64.b64encode(buff.getvalue()).decode('utf-8')
+            elem_image.save(buff, format="PNG")
+            result = base64.b64encode(buff.getvalue()).decode("utf-8")
 
         return result
 
@@ -287,7 +277,7 @@ class SmartRPAUIElemGetter:
                     ctrl_index = top_parent.descendants(
                         title=wrapper.window_text(),
                         class_name=wrapper.element_info.class_name,
-                        control_type=wrapper.element_info.control_type
+                        control_type=wrapper.element_info.control_type,
                     ).index(wrapper)
                 except ValueError:
                     ctrl_index = 0
@@ -296,24 +286,29 @@ class SmartRPAUIElemGetter:
             def parent_index(wrapper):
                 ctrl_index = 0
                 try:
-                    ctrl_index = wrapper.parent().descendants(
-                        title=wrapper.window_text(),
-                        class_name=wrapper.element_info.class_name,
-                        control_type=wrapper.element_info.control_type
-                    ).index(wrapper)
+                    ctrl_index = (
+                        wrapper.parent()
+                        .descendants(
+                            title=wrapper.window_text(),
+                            class_name=wrapper.element_info.class_name,
+                            control_type=wrapper.element_info.control_type,
+                        )
+                        .index(wrapper)
+                    )
                 except ValueError:
                     ctrl_index = 0
                 return ctrl_index
 
             while wrapper != top_parent:
-                gen_path[i] = {"class_name": wrapper.element_info.class_name,
-                               "title": wrapper.window_text().replace('\r', ''),
-                               "control_type": wrapper.element_info.control_type,
-                               "parent_index": parent_index(wrapper),
-                               "top_parent_index": top_parent_index(wrapper),
-                               "handle": wrapper.element_info.handle,
-                               "automation_id": wrapper.element_info.automation_id
-                               }
+                gen_path[i] = {
+                    "class_name": wrapper.element_info.class_name,
+                    "title": wrapper.window_text().replace("\r", ""),
+                    "control_type": wrapper.element_info.control_type,
+                    "parent_index": parent_index(wrapper),
+                    "top_parent_index": top_parent_index(wrapper),
+                    "handle": wrapper.element_info.handle,
+                    "automation_id": wrapper.element_info.automation_id,
+                }
                 #    "depth": i}
                 wrapper = wrapper.parent()
 
@@ -322,9 +317,11 @@ class SmartRPAUIElemGetter:
 
                 i += 1
 
-            gen_path[i] = {"class_name": top_parent.element_info.class_name,
-                           "title": top_parent.window_text(),
-                           "control_type": top_parent.element_info.control_type}
+            gen_path[i] = {
+                "class_name": top_parent.element_info.class_name,
+                "title": top_parent.window_text(),
+                "control_type": top_parent.element_info.control_type,
+            }
 
         except ValueError:
             # TODO must be logged
@@ -352,32 +349,41 @@ class SmartRPAUIElemGetter:
         result = dict()
         if generated_path:
             ordered_path = collections.OrderedDict(
-                reversed(sorted(generated_path.items())))
+                reversed(sorted(generated_path.items()))
+            )
 
             main_dlg_path = next(iter(ordered_path.values()))
             top_index = next(iter(ordered_path.keys()))
-            generated_code = "dk.window(class_name='{0}',"\
-                             "control_type='{1}', found_index=0)".format(
-                                 main_dlg_path['class_name'], main_dlg_path['control_type'])
+            generated_code = (
+                "dk.window(class_name='{0}',"
+                "control_type='{1}', found_index=0)".format(
+                    main_dlg_path["class_name"], main_dlg_path["control_type"]
+                )
+            )
 
-            for item_path in dropwhile(lambda x: x[0] > 1 or x[0] == top_index,
-                                       ordered_path.items()):
-                generated_code += ".descendants(class_name='{0}', title='{1}',"\
+            for item_path in dropwhile(
+                lambda x: x[0] > 1 or x[0] == top_index, ordered_path.items()
+            ):
+                generated_code += (
+                    ".descendants(class_name='{0}', title='{1}',"
                     "control_type='{2}', depth={4})[{3}]".format(
-                        item_path[1]['class_name'],
-                        item_path[1]['title'],
-                        item_path[1]['control_type'],
-                        0 if item_path[0] == 0 else item_path[1]['top_parent_index'],
-                        top_index-item_path[0] if item_path[0] > 0 else None
+                        item_path[1]["class_name"],
+                        item_path[1]["title"],
+                        item_path[1]["control_type"],
+                        0 if item_path[0] == 0 else item_path[1]["top_parent_index"],
+                        top_index - item_path[0] if item_path[0] > 0 else None,
                     )
-            result = "elem = {}\nelem.set_focus()\nelem.click_input()".format(generated_code)
+                )
+            result = "elem = {}\nelem.set_focus()\nelem.click_input()".format(
+                generated_code
+            )
         return result
 
     @classmethod
     def take_buff_screenshot(cls):
         buff = BytesIO()
         img = ImageGrab.grab(all_screens=True)
-        img.save(buff, format='png')
+        img.save(buff, format="png")
         return buff
 
     @classmethod
@@ -386,7 +392,7 @@ class SmartRPAUIElemGetter:
 
     @classmethod
     def save_temp_screenshot(cls, img: PIL.Image.Image) -> str:
-        with tempfile.NamedTemporaryFile(mode="wb", suffix='.png') as png:
+        with tempfile.NamedTemporaryFile(mode="wb", suffix=".png") as png:
             png.write(img)
             return png.name
 
@@ -408,8 +414,7 @@ class SmartRPAUIElemGetter:
         #         dir=self.temp_dir) as temp_png:
         #     temp_png.write(temp_img.getvalue())
         size_x, size_y = PIL.Image.open(self.screenshot).size
-        img = oaam.load_buff_png(
-            self.screenshot.getvalue(), size_x, size_y)
+        img = oaam.load_buff_png(self.screenshot.getvalue(), size_x, size_y)
         # img = oaam.load_ico('test.bmp', 3840, 1080)
         self.ss_overlay.add(geometry=oaam.Shape.image, hicon=img, x=0, y=0)
         self.ss_overlay.refresh()
