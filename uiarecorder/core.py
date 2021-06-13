@@ -70,10 +70,9 @@ class SmartRPAUIElemGetter:
         else:
             self.recorder_elems_path = str(Path(Path.cwd()).joinpath("recorder_elems"))
 
+        self.thread_is_alive = True
         self.thread = threading.Thread(target=self.worker)
         self.thread.start()
-
-        self.thread_is_alive = True
 
         self.create_temp_folder()
 
@@ -119,7 +118,6 @@ class SmartRPAUIElemGetter:
             elem_rect = wrapper.rectangle()
             elem_path = self.get_element_path(wrapper)
             self.queue.task_done()
-            # self.refresh_screen()
             json_data = {
                 "image": elem_image,
                 "rect": {
@@ -132,11 +130,7 @@ class SmartRPAUIElemGetter:
                 "path": elem_path,
             }
             self.save_into_json(json_data)
-            self.screenshot = self.take_buff_screenshot()
-            # self.main_overlay.clear_all()
-            # self.main_overlay.refresh()
-            # self.show_screenshot_full_screen()
-        # wrapper.draw_outline(colour='green', thickness=4)
+            self.draw_wrapper_rect_oaam(task["x"], task["y"], (0, 255, 0))
 
     @classmethod
     def refresh_screen(cls):
@@ -160,9 +154,22 @@ class SmartRPAUIElemGetter:
 
         return result
 
-    def draw_wrapper_rect_oaam(self, x, y):
+    def draw_wrapper_rect_oaam(self, x, y, rgb_tuple=(255, 0, 0)):
         rect = self.get_elem_rect(x, y)
         if self.previous_wrapper_rect != rect:
+            self.main_overlay.clear_all()
+            self.previous_wrapper_rect = rect
+            self.main_overlay.add(
+                geometry=oaam.Shape.rectangle,
+                x=rect.left - 5,
+                y=rect.top - 5,
+                width=rect.width() + 10,
+                height=rect.height() + 10,
+                thickness=3,
+                color=rgb_tuple,
+            )
+            self.main_overlay.refresh()
+        elif rgb_tuple != (255, 0, 0):
             self.main_overlay.clear_all()
             self.previous_wrapper_rect = rect
             self.main_overlay.add(
@@ -172,7 +179,7 @@ class SmartRPAUIElemGetter:
                 width=rect.width(),
                 height=rect.height(),
                 thickness=3,
-                color=(255, 0, 0),
+                color=rgb_tuple,
             )
             self.main_overlay.refresh()
 
@@ -379,8 +386,7 @@ class SmartRPAUIElemGetter:
             )
         return result
 
-    @classmethod
-    def take_buff_screenshot(cls):
+    def take_buff_screenshot(self):
         buff = BytesIO()
         img = ImageGrab.grab(all_screens=True)
         img.save(buff, format="png")

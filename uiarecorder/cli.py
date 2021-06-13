@@ -27,6 +27,8 @@ def on_click(x, y, btn, pressed):
     print(f'{"Pressed" if pressed else "Released"} {btn} at {(x, y)}')
     if pressed and btn.left:
         recorder.get_elem_under_cursor(x, y)
+    # elif not pressed and btn.left:
+    #     recorder.screenshot = recorder.take_buff_screenshot()
 
 
 def start():
@@ -37,13 +39,13 @@ def on_move(x, y):
     recorder.draw_wrapper_rect_oaam(x, y)
 
 
-listener_m = mouse_l(on_move=on_move, on_click=on_click)
+
 
 if __name__ == "__main__":
     print("Start...")
     # recorder.show_screenshot_full_screen()
 
     with keyboard.GlobalHotKeys({"<ctrl>+<alt>+s": close_recorder}) as kl:
-        listener_m.start()
-        listener_m.wait()
+        with mouse_l(on_move=on_move, on_click=on_click) as listener_m:
+            listener_m.join()
         kl.join()
