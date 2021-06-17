@@ -60,7 +60,8 @@ class SmartRPAUIElemGetter:
     temp_dir = f"{os.path.split(__file__)[0]}/temp"
 
     def __init__(self, elems_path=""):
-        self.desktop_obj = pywinauto.Desktop(backend="uia", allow_magic_lookup=False)
+        self.desktop_obj = pywinauto.Desktop(
+            backend="uia", allow_magic_lookup=False)
         self.screenshot = self.take_buff_screenshot()
 
         if os.environ.get("RECORDER_ELEMS_PATH") is not None:
@@ -68,7 +69,8 @@ class SmartRPAUIElemGetter:
         elif elems_path != "":
             self.recorder_elems_path = elems_path
         else:
-            self.recorder_elems_path = str(Path(Path.cwd()).joinpath("recorder_elems"))
+            self.recorder_elems_path = str(
+                Path(Path.cwd()).joinpath("recorder_elems"))
 
         self.thread_is_alive = True
         self.thread = threading.Thread(target=self.worker)
@@ -139,7 +141,8 @@ class SmartRPAUIElemGetter:
         """
 
         hwnd = win32gui.WindowFromPoint((0, 0))
-        monitor = (0, 0, win32api.GetSystemMetrics(0), win32api.GetSystemMetrics(1))
+        monitor = (0, 0, win32api.GetSystemMetrics(
+            0), win32api.GetSystemMetrics(1))
         win32gui.InvalidateRect(hwnd, monitor, True)
 
     def is_same_wrapper(self, x_coordinates, y_coordinates) -> bool:
@@ -226,7 +229,8 @@ class SmartRPAUIElemGetter:
             wrapper: возвращает pywinauto UIAWrapper
         """
         wrapper = self.desktop_obj.from_point(x_coordinates, y_coordinates)
-        self.queue.put({"wrapper": wrapper, "x": x_coordinates, "y": y_coordinates})
+        self.queue.put(
+            {"wrapper": wrapper, "x": x_coordinates, "y": y_coordinates})
 
         return wrapper
 
@@ -249,7 +253,8 @@ class SmartRPAUIElemGetter:
                 w, h = PIL.Image.open(self.screenshot).size
                 rect = wrapper.rectangle()
                 elem_image = PIL.Image.open(self.screenshot).crop(
-                    (int(rect.left), int(rect.top), int(rect.right), int(rect.bottom))
+                    (int(rect.left), int(rect.top), int(
+                        rect.right), int(rect.bottom))
                 )
             except Exception as err:
                 # TODO must be logged

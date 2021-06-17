@@ -11,7 +11,7 @@ def generate_snippet(generated_path):
         generated_path (dict): Словарь сгенерированными путями
 
     """
-    result = dict()
+    generated_code = dict()
     if generated_path:
         ordered_path = collections.OrderedDict(
             reversed(sorted(generated_path["path"].items()))
@@ -40,8 +40,7 @@ def generate_snippet(generated_path):
                 )
             )
         # result = "elem = {}\nelem.set_focus()\nelem.click_input()".format(generated_code)
-        result = generated_code
-    return result
+    return generated_code
 
 
 def find_element(generated_path):
@@ -100,7 +99,7 @@ def get_json_file(filename, elem_dir="recorder_elems"):
 # elem = find_element(path)
 # elem.set_focus()
 
-path = get_json_file("elem_79apaet7")
-elem = find_element(path)
+# path = get_json_file("elem_79apaet7")
+# elem = find_element(path)
 # elem.set_focus()
-elem.draw_outline()
+# elem.draw_outline()

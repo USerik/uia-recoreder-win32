@@ -6,20 +6,19 @@ import os
 from pynput import mouse, keyboard
 from pynput.mouse import Listener as mouse_l
 from pynput.keyboard import Listener as keyboard_l
-from core import SmartRPAUIElemGetter as srpa
+from .core import SmartRPAUIElemGetter as srpa
 
 
 recorder = srpa()
 
-
 def close_recorder():
     print("Exit")
+    listener_m.stop()
     srpa.main_overlay.clear_all()
     srpa.main_overlay.refresh()
     srpa.ss_overlay.clear_all()
     srpa.ss_overlay.refresh()
     recorder.stop_thread()
-    listener_m.stop()
     sys.exit()
 
 
@@ -38,14 +37,10 @@ def start():
 def on_move(x, y):
     recorder.draw_wrapper_rect_oaam(x, y)
 
+listener_m = mouse_l(on_move=on_move, on_click=on_click)
 
-
-
-if __name__ == "__main__":
+def start():
+    listener_m.start()
     print("Start...")
-    # recorder.show_screenshot_full_screen()
-
-    with keyboard.GlobalHotKeys({"<ctrl>+<alt>+s": close_recorder}) as kl:
-        with mouse_l(on_move=on_move, on_click=on_click) as listener_m:
-            listener_m.join()
+    with keyboard.GlobalHotKeys({"<ctrl>+<alt>+s": close_recorder}) as kl:        
         kl.join()
