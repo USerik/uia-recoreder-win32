@@ -20,12 +20,18 @@ import tempfile
 import warnings
 import time
 
+import tkinter as tk
+from tkinter import simpledialog
+
 from io import BytesIO
 from queue import Queue
 from itertools import dropwhile
+
+import unicodedata
+import re
+
 from pathlib import Path
 import PIL
-
 import pywinauto
 
 import comtypes
@@ -96,15 +102,19 @@ class SmartRPAUIElemGetter:
             date ([type]): [description]
         """
         Path(self.recorder_elems_path).mkdir(exist_ok=True)
-
-        with tempfile.NamedTemporaryFile(
-            mode="w",
-            prefix="elem_",
-            suffix=".json",
-            delete=False,
-            dir=self.recorder_elems_path,
-        ) as outfile:
-            json.dump(obj=data, fp=outfile, indent=4, sort_keys=True)
+        filename = ".".join([self.user_input_gui(), 'json'])
+        if filename:
+            with open(Path(self.recorder_elems_path).joinpath(filename), 'w', encoding='utf-8') as outfile:
+                json.dump(obj=data, fp=outfile, indent=4, sort_keys=True)
+        else:
+            with tempfile.NamedTemporaryFile(
+                mode="w",
+                prefix="elem_",
+                suffix=".json",
+                delete=False,
+                dir=self.recorder_elems_path,
+            ) as outfile:
+                json.dump(obj=data, fp=outfile, indent=4, sort_keys=True)
 
     def worker(self):
         """Обработка событии в очереди"""
@@ -131,8 +141,8 @@ class SmartRPAUIElemGetter:
                 "mouse_coords": {"x": task["x"], "y": task["y"]},
                 "path": elem_path,
             }
-            self.save_into_json(json_data)
             self.draw_wrapper_rect_oaam(task["x"], task["y"], (0, 255, 0))
+            self.save_into_json(json_data)
 
     @classmethod
     def refresh_screen(cls):
@@ -429,3 +439,31 @@ class SmartRPAUIElemGetter:
         # img = oaam.load_ico('test.bmp', 3840, 1080)
         self.ss_overlay.add(geometry=oaam.Shape.image, hicon=img, x=0, y=0)
         self.ss_overlay.refresh()
+
+    def user_input_gui(self) -> str:
+        ROOT = tk.Tk()
+        ROOT.withdraw()
+        while True:
+            user_input = self.slugify(simpledialog.askstring(
+                title="Название элемента", prompt="Введите название элемента:"))
+            if user_input:
+                break
+        return user_input
+
+    @classmethod
+    def slugify(cls, value, allow_unicode=False):
+        """
+        Taken from https://github.com/django/django/blob/master/django/utils/text.py
+        Convert to ASCII if 'allow_unicode' is False. Convert spaces or repeated
+        dashes to single dashes. Remove characters that aren't alphanumerics,
+        underscores, or hyphens. Convert to lowercase. Also strip leading and
+        trailing whitespace, dashes, and underscores.
+        """
+        value = str(value)
+        if allow_unicode:
+            value = unicodedata.normalize('NFKC', value)
+        else:
+            value = unicodedata.normalize('NFKD', value).encode(
+                'ascii', 'ignore').decode('ascii')
+        value = re.sub(r'[^\w\s-]', '', value.lower())
+        return re.sub(r'[-\s]+', '-', value).strip('-_')
