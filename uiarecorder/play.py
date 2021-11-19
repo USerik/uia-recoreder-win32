@@ -1,9 +1,13 @@
+from time import sleep
 import logging
 import json
 import collections
 from itertools import dropwhile
 
-logger = logging.getLogger("UIARecorder")
+from pywinauto.controls.uiawrapper import UIAWrapper
+
+
+logger = logging.getLogger("Robot")
 
 
 def generate_snippet(generated_path):
@@ -28,8 +32,6 @@ def generate_snippet(generated_path):
             )
         )
 
-        
-        
         for item_path in dropwhile(
             lambda x: int(x[0]) != 0, ordered_path.items()
         ):
@@ -39,7 +41,7 @@ def generate_snippet(generated_path):
                     item_path[1]["class_name"],
                     item_path[1]["title"],
                     item_path[1]["control_type"],
-                    item_path[1]["top_parent_index"],
+                    item_path[1]["top_parent_index"] if "top_parent_index" in item_path[1] else 0,
                     top_index -
                     int(item_path[0]) if int(item_path[0]) > 0 else None,
                 )
@@ -47,14 +49,14 @@ def generate_snippet(generated_path):
     return generated_code
 
 
-def find_element_by_uia(json_path: str, need_print: bool = False) -> dict:
+def find_element_by_uia(json_path: str, need_print: bool = False, wait_time: int = 10) -> UIAWrapper:
     """[Поиск элемента через pywinauto.Desktop(backend='uia')]
 
     Args:
         json_path ([str]): [Путь до json файла]
         need_print ([bool]): [False по умолчанию, вывод сгенерированного кода, если True]
     """
-
+    elem = None
     code_inject = """   
 from pywinauto import Desktop
 dk = Desktop(backend='uia', allow_magic_lookup=False)
@@ -62,12 +64,21 @@ dk = Desktop(backend='uia', allow_magic_lookup=False)
 
     generated_json = get_json_file(json_path)
     generated_code = generate_snippet(generated_json)
+    file_name = ' '.join(
+        ' '.join(json_path.split('\\')).split('/')).split()[-1]
     if need_print:
-        print(generated_code)
+        logger.info(generated_code)
     exec(code_inject)
-    elem = eval(generated_code)
-    file_name = ' '.join(' '.join(json_path.split('\\')).split('/')).split()[-1]
-    logger.info(f"SmartRPA (activity): UIA Element: {file_name}")
+    for _ in range(wait_time):
+        try:
+            elem = eval(generated_code)
+        except Exception as err:
+            logger.error(
+                f'SmartRPA (activity): UIA Element could not find: {file_name}')
+        if elem:
+            logger.info(f"SmartRPA (activity): UIA Element: {file_name}")
+            return elem
+        sleep(1)
     return elem
 
 

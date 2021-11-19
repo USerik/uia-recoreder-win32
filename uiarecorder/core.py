@@ -19,6 +19,7 @@ import base64
 import tempfile
 import warnings
 import time
+import pywintypes
 
 import tkinter as tk
 from tkinter import simpledialog
@@ -181,7 +182,11 @@ class SmartRPAUIElemGetter:
                 thickness=3,
                 color=rgb_tuple,
             )
-            self.main_overlay.refresh()
+            try:
+                self.main_overlay.refresh()
+            except pywintypes.error:
+                pass
+            
         elif rgb_tuple != (255, 0, 0):
             self.main_overlay.clear_all()
             self.previous_wrapper_rect = rect
@@ -296,7 +301,7 @@ class SmartRPAUIElemGetter:
             def top_parent_index(wrapper):
                 ctrl_index = 0
                 try:
-                    ctrl_index = top_parent.descendants(
+                    ctrl_index = wrapper.top_level_parent().descendants(
                         title=wrapper.window_text(),
                         class_name=wrapper.element_info.class_name,
                         control_type=wrapper.element_info.control_type,
