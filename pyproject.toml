@@ -30,7 +30,6 @@ dependencies = [
     "toml==0.10.2",
     "typed-ast==1.4.3",
     "wrapt==1.12.1",
-    "UIARecorder @ file:///D:/My%20project/uia-recoreder-win32/dist/UIARecorder-0.1-py3-none-any.whl",
 ]
 requires-python = ">=3.7"
 dynamic = ["classifiers"]
